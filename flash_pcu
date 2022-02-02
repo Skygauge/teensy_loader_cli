@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [[ -f .pcu_serial ]]; then
-    PCU_SERIAL=$(cat .pcu_serial)
+SERIAL_FILE=~/.pcu_serial
+
+if [[ -f $SERIAL_FILE ]]; then
+    PCU_SERIAL=$(cat $SERIAL_FILE)
 else
-    echo "ERROR: .pcu_serial does not exist."
+    echo "ERROR: $SERIAL_FILE does not exist."
     echo "Run the following command on the correct serial port to save the PCU's SN:"
     echo "  SERIAL_ID=\$(udevadm info /dev/ttyACM0 | awk -F \"[ =]\" '/ID_SERIAL_SHORT/ { print \$3 }')"
-    echo "  echo \$SERIAL_ID > .pcu_serial"
+    echo "  echo \$SERIAL_ID > $SERIAL_FILE"
     exit 1
 fi
 
