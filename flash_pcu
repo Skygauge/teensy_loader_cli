@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ -f .pcu_serial ]]; then
+    PCU_SERIAL=$(cat .pcu_serial)
+else
+    echo "ERROR: .pcu_serial does not exist."
+    echo "Run the following command on the correct serial port to save the PCU's SN:"
+    echo "  SERIAL_ID=\$(udevadm info /dev/ttyACM0 | awk -F \"[ =]\" '/ID_SERIAL_SHORT/ { print \$3 }')"
+    echo "  echo \$SERIAL_ID > .pcu_serial"
+    exit 1
+fi
+
+./teensy_loader_cli --mcu=imxrt1062 --sn=$PCU_SERIAL -w -s -v pcu_firmware.hex
