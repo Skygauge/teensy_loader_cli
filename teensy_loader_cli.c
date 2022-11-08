@@ -52,6 +52,8 @@ void usage(const char *err)
 	exit(1);
 }
 
+bool teensy_load(void);
+
 // USB Access Functions
 int teensy_open(void);
 int teensy_write(void *buf, int len, double timeout);
@@ -92,10 +94,7 @@ char *serial_number=NULL;
 
 int main(int argc, char **argv)
 {
-	unsigned char buf[2048];
-	int num, addr, r, write_size;
-
-	int first_block=1, waited=0;
+	const int MAX_NUM_LOAD_RETRIES = 2;
 
 	// parse command line arguments
 	parse_options(argc, argv);
@@ -107,11 +106,25 @@ int main(int argc, char **argv)
 	}
 	printf_verbose("Teensy Loader, Command Line, Version 2.2\n");
 
+	for (int i = 0; i < MAX_NUM_LOAD_RETRIES; i++) {
+		if (teensy_load()) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+bool teensy_load()
+{
+	unsigned char buf[2048];
+	int num, addr, r, write_size;
+	int first_block=1, waited=0;
+
 	if (block_size == 512 || block_size == 1024) {
 		write_size = block_size + 64;
 	} else {
 		write_size = block_size + 2;
-	};
+	}
 
 	if (!boot_only) {
 		// read the intel hex file
@@ -151,7 +164,7 @@ int main(int argc, char **argv)
 	if (boot_only) {
 		boot(buf, write_size);
 		teensy_close();
-		return 0;
+		return true;
 	}
 
 	// if we waited for the device, read the hex file again
@@ -195,7 +208,10 @@ int main(int argc, char **argv)
 			die("Unknown code/block size\n");
 		}
 		r = teensy_write(buf, write_size, first_block ? 5.0 : 0.5);
-		if (!r) die("error writing to Teensy\n");
+		if (!r) {
+			printf_verbose("error writing to Teensy\n");
+			return false;
+		}
 		first_block = 0;
 	}
 	printf_verbose("\n");
@@ -205,7 +221,7 @@ int main(int argc, char **argv)
 		boot(buf, write_size);
 	}
 	teensy_close();
-	return 0;
+	return true;
 }
 
 
