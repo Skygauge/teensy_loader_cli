@@ -1,3 +1,9 @@
 #!/bin/bash
 
+if [ -f ~/scripts/gcu/enable_gcu_usb ]; then
+    cd ~/scripts/gcu/
+    ./enable_gcu_usb
+    cd -
+fi
+
 ./teensy_loader_cli --mcu=imxrt1062 -w -s -v gcu_firmware.hex
